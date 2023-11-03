@@ -22,7 +22,7 @@ pub async fn listen_for_slack_events(config: Arc<ApplicationConfig>) -> Result<(
 		listener_environment,
 		callbacks,
 	);
-	event_listener.listen_for(&config.slack_api_token).await?;
+	event_listener.listen_for(&config.slack_app_token).await?;
 	event_listener.serve().await;
 	Ok(())
 }

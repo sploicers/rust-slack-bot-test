@@ -3,7 +3,6 @@ use std::sync::Arc;
 use util::{ApplicationConfig, Result};
 mod bot;
 mod commands;
-mod handlers;
 mod util;
 
 #[tokio::main]

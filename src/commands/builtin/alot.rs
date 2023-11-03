@@ -3,10 +3,11 @@ use crate::commands::FromSlackMessage;
 use crate::util::Result;
 use async_trait::async_trait;
 use rand::seq::SliceRandom;
+use regex::Regex;
 use slack_morphism::prelude::{SlackApiChatPostMessageRequest, SlackMessageEvent};
 use slack_morphism::{SlackChannelId, SlackMessageContent};
 
-const ALOT_OF_URLS: &'static [&'static str] = &[
+const ALOT_OF_URLS: &[&str] = &[
 	"https://3.bp.blogspot.com/_D_Z-D2tzi14/S8TffVGLElI/AAAAAAAACxA/trH1ch0Y3tI/s320/ALOT6.png",
 	"http://1.bp.blogspot.com/_D_Z-D2tzi14/S8TflwXvTgI/AAAAAAAACxI/qgd1wYcTWV8/s320/ALOT12.png",
 	"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS2mynEom5JcAZCTGQPmDCfL7rFqDCDn9Dkq03ePZGl14w9bpjCJxUWL09ZqEeV2eRJJsA&usqp=CAU",
@@ -20,15 +21,20 @@ pub struct AlotCommand {
 
 impl FromSlackMessage<AlotCommand> for AlotCommand {
 	fn from_message(message: SlackMessageEvent) -> Option<Self> {
-		let matches = message
+		let is_alot = message
 			.content
 			.and_then(|content| content.text)
-			.map(|text| text.contains("alot"))
-			.unwrap_or_default();
+			.map(|text| {
+				Regex::new(r"\b(alot)\b")
+					.expect("Invalid regular expression.")
+					.is_match(&text)
+			})
+			.unwrap_or(false);
 
-		if matches {
+		if is_alot {
 			let channel_id = message.origin.channel.unwrap();
 			let img_url = String::from(*ALOT_OF_URLS.choose(&mut rand::thread_rng()).unwrap());
+
 			Some(AlotCommand {
 				channel_id,
 				img_url,
