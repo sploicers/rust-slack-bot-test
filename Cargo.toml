@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 async-trait = "0.1.74"
 dotenv = "0.15.0"
+futures = "0.3.29"
 rand = "0.8.5"
 regex = "1.10.2"
 slack-morphism = { version = "^1.15.1", features = ["hyper", "axum"] }

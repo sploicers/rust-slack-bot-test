@@ -1,13 +1,14 @@
-use bot::listen_for_slack_events;
+use bot::{listen_for_slack_events, AlotListener, Robot};
 use std::sync::Arc;
 use util::{ApplicationConfig, Result};
 mod bot;
-mod commands;
 mod util;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-	let config = Arc::new(ApplicationConfig::new()?);
-	listen_for_slack_events(config).await?;
+	let config = ApplicationConfig::new()?;
+	let robot = Robot::new().with_listener(AlotListener::new());
+
+	listen_for_slack_events(Arc::new(config), Arc::new(robot)).await?;
 	Ok(())
 }

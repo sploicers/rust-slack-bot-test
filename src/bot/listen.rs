@@ -1,13 +1,12 @@
-use crate::{
-	commands::{AlotCommand, BotCommand, FromSlackMessage},
-	util::{ApplicationConfig, Result},
-};
+use super::robot::Robot;
+use crate::util::{ApplicationConfig, Result};
 use slack_morphism::prelude::*;
 use std::sync::Arc;
 
-type SlackSession<'a> = SlackClientSession<'a, SlackClientHyperHttpsConnector>;
-
-pub async fn listen_for_slack_events(config: Arc<ApplicationConfig>) -> Result<()> {
+pub async fn listen_for_slack_events(
+	config: Arc<ApplicationConfig>,
+	robot: Arc<Robot>,
+) -> Result<()> {
 	let client = Arc::new(SlackClient::new(SlackClientHyperConnector::new()));
 	let callbacks = SlackSocketModeListenerCallbacks::new()
 		.with_command_events(on_command_event)
@@ -15,8 +14,11 @@ pub async fn listen_for_slack_events(config: Arc<ApplicationConfig>) -> Result<(
 		.with_push_events(on_push_event);
 
 	let listener_environment = Arc::new(
-		SlackClientEventsListenerEnvironment::new(client.clone()).with_user_state(config.clone()),
+		SlackClientEventsListenerEnvironment::new(client.clone())
+			.with_user_state(robot.clone())
+			.with_user_state(config.clone()),
 	);
+
 	let event_listener = SlackClientSocketModeListener::new(
 		&SlackClientSocketModeConfig::new(),
 		listener_environment,
@@ -52,26 +54,30 @@ async fn on_push_event(
 	client: Arc<SlackHyperClient>,
 	state: SlackClientEventsUserState,
 ) -> Result<()> {
-	let config = state
-		.read()
-		.await
-		.get_user_state::<Arc<ApplicationConfig>>()
-		.expect("Fatal - app configuration not registered in user state.")
-		.clone();
+	let config = from_state::<ApplicationConfig>(&state).await;
+	let robot = from_state::<Robot>(&state).await;
+	let ctx = client.open_session(&config.slack_bot_token);
 
 	match event.event {
-		SlackEventCallbackBody::Message(message_event) => {
-			let session: SlackSession = client.open_session(&config.slack_bot_token);
+		SlackEventCallbackBody::Message(message) => {
+			robot.handle(&message, &ctx).await;
+		}
+		SlackEventCallbackBody::AppMention(mention) => {
+			println!("{:#?}", mention);
+		}
+		_ => (),
+	};
+	Ok(())
+}
 
-			if let Some(command) = AlotCommand::from_message(message_event) {
-				command.execute(&session).await?
-			}
-			Ok(())
-		}
-		SlackEventCallbackBody::AppMention(mention_event) => {
-			println!("{:#?}", mention_event);
-			Ok(())
-		}
-		_ => Ok(()),
-	}
+async fn from_state<T>(state: &SlackClientEventsUserState) -> Arc<T>
+where
+	T: Send + Sync + 'static,
+{
+	state
+		.read()
+		.await
+		.get_user_state::<Arc<T>>()
+		.expect("Fatal - attempted to read unregistered type from user state.")
+		.clone()
 }
