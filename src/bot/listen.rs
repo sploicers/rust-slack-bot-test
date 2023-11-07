@@ -59,11 +59,11 @@ async fn on_push_event(
 	let ctx = client.open_session(&config.slack_bot_token);
 
 	match event.event {
-		SlackEventCallbackBody::Message(message) => {
-			robot.handle(&message, &ctx).await;
-		}
 		SlackEventCallbackBody::AppMention(mention) => {
 			println!("{:#?}", mention);
+		}
+		SlackEventCallbackBody::Message(message) => {
+			robot.handle(&message, &ctx).await;
 		}
 		_ => (),
 	};
