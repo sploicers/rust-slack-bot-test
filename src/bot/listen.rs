@@ -70,10 +70,7 @@ async fn on_push_event(
 	Ok(())
 }
 
-async fn from_state<T>(state: &SlackClientEventsUserState) -> Arc<T>
-where
-	T: Send + Sync + 'static,
-{
+async fn from_state<T: Send + Sync + 'static>(state: &SlackClientEventsUserState) -> Arc<T> {
 	state
 		.read()
 		.await
