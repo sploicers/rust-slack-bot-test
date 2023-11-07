@@ -1,4 +1,5 @@
-use super::{context::SlackContext, MessageListener};
+use super::MessageListener;
+use crate::util::SlackContext;
 use futures::future::join_all;
 use slack_morphism::prelude::SlackMessageEvent;
 

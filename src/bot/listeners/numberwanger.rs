@@ -1,12 +1,9 @@
 use super::MessageListener;
-use crate::bot::context::SlackContext;
+use crate::util::{react_to_message, SlackContext};
 use async_trait::async_trait;
 use rand::Rng;
 use regex::Regex;
-use slack_morphism::{
-	prelude::{SlackApiReactionsAddRequest, SlackMessageEvent},
-	SlackReactionName,
-};
+use slack_morphism::{prelude::SlackMessageEvent, SlackReactionName};
 
 pub struct NumberWanger {
 	matcher: Regex,
@@ -35,15 +32,6 @@ impl MessageListener for NumberWanger {
 	}
 
 	async fn handle(&self, message: &SlackMessageEvent, ctx: &SlackContext<'_>) {
-		let message_origin = message.origin.clone();
-		let channel_id = message_origin.channel.unwrap();
-
-		let _ = ctx
-			.reactions_add(&SlackApiReactionsAddRequest::new(
-				channel_id,
-				SlackReactionName::from("numberwang"),
-				message_origin.ts,
-			))
-			.await;
+		react_to_message(ctx, message, SlackReactionName::from("numberwang")).await;
 	}
 }

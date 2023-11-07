@@ -1,12 +1,9 @@
 use super::MessageListener;
-use crate::bot::context::SlackContext;
+use crate::util::{post_in_channel, SlackContext};
 use async_trait::async_trait;
 use rand::seq::SliceRandom;
 use regex::Regex;
-use slack_morphism::{
-	prelude::{SlackApiChatPostMessageRequest, SlackMessageEvent},
-	SlackMessageContent,
-};
+use slack_morphism::prelude::SlackMessageEvent;
 
 const ALOT_OF_URLS: &[&str] = &[
 	"https://3.bp.blogspot.com/_D_Z-D2tzi14/S8TffVGLElI/AAAAAAAACxA/trH1ch0Y3tI/s320/ALOT6.png",
@@ -45,12 +42,6 @@ impl MessageListener for AlotListener {
 				.choose(&mut rand::thread_rng())
 				.expect("Failed to select image URL from list."),
 		);
-
-		let _ = ctx
-			.chat_post_message(&SlackApiChatPostMessageRequest::new(
-				channel_id.clone(),
-				SlackMessageContent::new().with_text(img_url.clone()),
-			))
-			.await;
+		post_in_channel(ctx, channel_id, &img_url).await;
 	}
 }

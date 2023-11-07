@@ -1,4 +1,4 @@
-use crate::bot::context::SlackContext;
+use crate::util::SlackContext;
 use async_trait::async_trait;
 use slack_morphism::prelude::SlackMessageEvent;
 
