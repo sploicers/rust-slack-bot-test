@@ -1,7 +1,9 @@
-use super::MessageListener;
-use crate::util::{react_to_message, SlackContext};
+use std::sync::Arc;
+
+use super::Listener;
+use crate::util::{react_to_message, ApplicationConfig, SlackContext};
 use async_trait::async_trait;
-use rand::Rng;
+use rand::{rngs::ThreadRng, Rng};
 use regex::Regex;
 use slack_morphism::{prelude::SlackMessageEvent, SlackReactionName};
 
@@ -18,8 +20,8 @@ impl NumberWanger {
 }
 
 #[async_trait]
-impl MessageListener for NumberWanger {
-	fn applies_to_message(&self, message: &SlackMessageEvent) -> bool {
+impl Listener<SlackMessageEvent> for NumberWanger {
+	fn applies_to_event(&self, message: &SlackMessageEvent) -> bool {
 		let is_numberwang_candidate = message
 			.content
 			.as_ref()
@@ -27,11 +29,16 @@ impl MessageListener for NumberWanger {
 			.map(|text| self.matcher.is_match(text))
 			.unwrap_or(false);
 
-		let is_numberwang = rand::thread_rng().gen_range(1..=10) <= 2;
+		let is_numberwang = ThreadRng::default().gen_range(1..=10) <= 2;
 		is_numberwang_candidate && is_numberwang
 	}
 
-	async fn handle(&self, message: &SlackMessageEvent, ctx: &SlackContext<'_>) {
+	async fn handle(
+		&self,
+		message: &SlackMessageEvent,
+		ctx: &SlackContext<'_>,
+		_: &Arc<ApplicationConfig>,
+	) {
 		react_to_message(ctx, message, SlackReactionName::from("numberwang")).await;
 	}
 }

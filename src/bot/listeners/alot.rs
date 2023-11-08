@@ -1,5 +1,7 @@
-use super::MessageListener;
-use crate::util::{post_in_channel, SlackContext};
+use std::sync::Arc;
+
+use super::Listener;
+use crate::util::{post_in_channel, ApplicationConfig, SlackContext};
 use async_trait::async_trait;
 use rand::seq::SliceRandom;
 use regex::Regex;
@@ -25,8 +27,8 @@ impl AlotListener {
 }
 
 #[async_trait]
-impl MessageListener for AlotListener {
-	fn applies_to_message(&self, message: &SlackMessageEvent) -> bool {
+impl Listener<SlackMessageEvent> for AlotListener {
+	fn applies_to_event(&self, message: &SlackMessageEvent) -> bool {
 		message
 			.content
 			.as_ref()
@@ -35,7 +37,12 @@ impl MessageListener for AlotListener {
 			.unwrap_or(false)
 	}
 
-	async fn handle(&self, message: &SlackMessageEvent, ctx: &SlackContext<'_>) {
+	async fn handle(
+		&self,
+		message: &SlackMessageEvent,
+		ctx: &SlackContext<'_>,
+		_: &Arc<ApplicationConfig>,
+	) {
 		let channel_id = message.origin.channel.as_ref().unwrap();
 		let img_url = String::from(
 			*ALOT_OF_URLS

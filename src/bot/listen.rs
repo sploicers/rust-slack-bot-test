@@ -9,9 +9,8 @@ pub async fn listen_for_slack_events(
 ) -> Result<()> {
 	let client = Arc::new(SlackClient::new(SlackClientHyperConnector::new()));
 	let callbacks = SlackSocketModeListenerCallbacks::new()
-		.with_command_events(on_command_event)
-		.with_interaction_events(on_interaction_event)
-		.with_push_events(on_push_event);
+		.with_push_events(on_push_event)
+		.with_command_events(on_command_event);
 
 	let listener_environment = Arc::new(
 		SlackClientEventsListenerEnvironment::new(client.clone())
@@ -29,12 +28,24 @@ pub async fn listen_for_slack_events(
 	Ok(())
 }
 
-async fn on_interaction_event(
-	event: SlackInteractionEvent,
-	_client: Arc<SlackHyperClient>,
-	_states: SlackClientEventsUserState,
+async fn on_push_event(
+	event: SlackPushEventCallback,
+	client: Arc<SlackHyperClient>,
+	state: SlackClientEventsUserState,
 ) -> Result<()> {
-	println!("{:#?}", event);
+	let config = from_state::<ApplicationConfig>(&state).await;
+	let robot = from_state::<Robot>(&state).await;
+	let ctx = client.open_session(&config.slack_bot_token);
+
+	match event.event {
+		SlackEventCallbackBody::AppMention(mention) => {
+			robot.handle_app_mention(&mention, &ctx, &config).await;
+		}
+		SlackEventCallbackBody::Message(message) => {
+			robot.handle_message(&message, &ctx, &config).await;
+		}
+		_ => (),
+	};
 	Ok(())
 }
 
@@ -47,27 +58,6 @@ async fn on_command_event(
 	Ok(SlackCommandEventResponse::new(
 		SlackMessageContent::new().with_text("Working on it".into()),
 	))
-}
-
-async fn on_push_event(
-	event: SlackPushEventCallback,
-	client: Arc<SlackHyperClient>,
-	state: SlackClientEventsUserState,
-) -> Result<()> {
-	let config = from_state::<ApplicationConfig>(&state).await;
-	let robot = from_state::<Robot>(&state).await;
-	let ctx = client.open_session(&config.slack_bot_token);
-
-	match event.event {
-		SlackEventCallbackBody::AppMention(mention) => {
-			println!("{:#?}", mention);
-		}
-		SlackEventCallbackBody::Message(message) => {
-			robot.handle(&message, &ctx).await;
-		}
-		_ => (),
-	};
-	Ok(())
 }
 
 async fn from_state<T: Send + Sync + 'static>(state: &SlackClientEventsUserState) -> Arc<T> {

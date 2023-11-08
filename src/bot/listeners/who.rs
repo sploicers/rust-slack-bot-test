@@ -1,13 +1,13 @@
-use crate::util::{post_in_channel, SlackContext};
-
-use super::MentionListener;
+use super::Listener;
+use crate::util::{post_in_channel, ApplicationConfig, SlackContext};
 use async_trait::async_trait;
-use rand::Rng;
+use rand::{rngs::ThreadRng, Rng};
 use regex::Regex;
 use slack_morphism::{
 	prelude::{SlackApiConversationsMembersRequest, SlackAppMentionEvent},
 	SlackChannelId, SlackUserId,
 };
+use std::sync::Arc;
 
 pub struct WhoListener {
 	matcher: Regex,
@@ -23,8 +23,8 @@ impl WhoListener {
 }
 
 #[async_trait]
-impl MentionListener for WhoListener {
-	fn applies_to_message(&self, mention: &SlackAppMentionEvent) -> bool {
+impl Listener<SlackAppMentionEvent> for WhoListener {
+	fn applies_to_event(&self, mention: &SlackAppMentionEvent) -> bool {
 		mention
 			.content
 			.text
@@ -33,7 +33,12 @@ impl MentionListener for WhoListener {
 			.unwrap_or(false)
 	}
 
-	async fn handle(&self, message: &SlackAppMentionEvent, ctx: &SlackContext<'_>) {
+	async fn handle(
+		&self,
+		message: &SlackAppMentionEvent,
+		ctx: &SlackContext<'_>,
+		_: &Arc<ApplicationConfig>,
+	) {
 		let msg_text = message
 			.content
 			.text
@@ -47,7 +52,13 @@ impl MentionListener for WhoListener {
 
 		let channel_id = message.channel.clone();
 		let thing_to_do = &captures["thething"];
-		let chosen_user = random_user_from_channel(ctx, channel_id.clone()).await;
+
+		let mut users_in_channel: Vec<SlackUserId> =
+			list_users_in_channel(ctx, channel_id.clone()).await;
+
+		let chosen_user =
+			users_in_channel.swap_remove(ThreadRng::default().gen_range(0..users_in_channel.len()));
+
 		let response = format!("<@{}> should {}.", chosen_user, thing_to_do);
 		post_in_channel(ctx, &channel_id, &response).await;
 	}
@@ -61,13 +72,4 @@ async fn list_users_in_channel(
 		.await
 		.map(|res| res.members)
 		.unwrap_or_default()
-}
-
-async fn random_user_from_channel(
-	ctx: &SlackContext<'_>,
-	channel_id: SlackChannelId,
-) -> SlackUserId {
-	let mut users = list_users_in_channel(ctx, channel_id).await;
-	let mut rng = rand::thread_rng();
-	users.swap_remove(rng.gen_range(0..users.len()))
 }
