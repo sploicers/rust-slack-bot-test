@@ -1,6 +1,6 @@
 use super::Result;
 use dotenv::dotenv;
-use slack_morphism::{SlackApiToken, SlackApiTokenValue};
+use slack_morphism::{SlackApiToken, SlackApiTokenValue, SlackUserId};
 extern crate dotenv;
 
 pub struct ApplicationConfig {
@@ -10,6 +10,7 @@ pub struct ApplicationConfig {
 	pub slack_signing_secret: String,
 	pub slack_app_token: SlackApiToken,
 	pub slack_bot_token: SlackApiToken,
+	pub slack_bot_user_id: SlackUserId,
 }
 
 impl ApplicationConfig {
@@ -26,6 +27,7 @@ impl ApplicationConfig {
 			slack_bot_token: SlackApiToken::new(SlackApiTokenValue(envar_or_panic(
 				"SLACK_BOT_USER_OAUTH_TOKEN",
 			))),
+			slack_bot_user_id: SlackUserId(envar_or_panic("SLACK_BOT_USER_ID")),
 		})
 	}
 }

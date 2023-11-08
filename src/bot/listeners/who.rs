@@ -16,7 +16,7 @@ pub struct WhoListener {
 impl WhoListener {
 	pub fn new() -> Self {
 		Self {
-			matcher: Regex::new(r"who should (?<thething>.+)\?$")
+			matcher: Regex::new(r"[Ww]ho should (?<thething>.+)\?$")
 				.expect("Invalid regular expression."),
 		}
 	}
@@ -37,7 +37,7 @@ impl Listener<SlackAppMentionEvent> for WhoListener {
 		&self,
 		message: &SlackAppMentionEvent,
 		ctx: &SlackContext<'_>,
-		_: &Arc<ApplicationConfig>,
+		config: &Arc<ApplicationConfig>,
 	) {
 		let msg_text = message
 			.content
@@ -53,8 +53,11 @@ impl Listener<SlackAppMentionEvent> for WhoListener {
 		let channel_id = message.channel.clone();
 		let thing_to_do = &captures["thething"];
 
-		let mut users_in_channel: Vec<SlackUserId> =
-			list_users_in_channel(ctx, channel_id.clone()).await;
+		let mut users_in_channel: Vec<SlackUserId> = list_users_in_channel(ctx, channel_id.clone())
+			.await
+			.into_iter()
+			.filter(|user_id| user_id != &config.slack_bot_user_id)
+			.collect();
 
 		let chosen_user =
 			users_in_channel.swap_remove(ThreadRng::default().gen_range(0..users_in_channel.len()));
