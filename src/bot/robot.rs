@@ -1,23 +1,24 @@
-use std::sync::Arc;
-
-use super::{Listener, SlackEvent};
-use crate::util::{ApplicationConfig, SlackContext};
+use super::{brain::Brain, Listener, SlackEvent};
+use crate::util::{ApplicationConfig, Result, SlackContext};
 use futures::future::join_all;
 use slack_morphism::prelude::{SlackAppMentionEvent, SlackMessageEvent};
+use std::sync::Arc;
 
 type RegisteredListeners<T> = Vec<Box<dyn Listener<T> + Send + Sync + 'static>>;
 
 pub struct Robot {
+	brain: Brain,
 	message_listeners: RegisteredListeners<SlackMessageEvent>,
 	mention_listeners: RegisteredListeners<SlackAppMentionEvent>,
 }
 
 impl Robot {
-	pub fn new() -> Self {
-		Self {
+	pub fn new(config: Arc<ApplicationConfig>) -> Result<Self> {
+		Ok(Self {
+			brain: Brain::new(config)?,
 			message_listeners: vec![],
 			mention_listeners: vec![],
-		}
+		})
 	}
 
 	pub fn with_message_listener(

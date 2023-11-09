@@ -8,6 +8,7 @@ async-trait = "0.1.74"
 dotenv = "0.15.0"
 futures = "0.3.29"
 rand = "0.8.5"
+redis = "0.23.3"
 regex = "1.10.2"
 slack-morphism = { version = "^1.15.1", features = ["hyper", "axum"] }
 tokio = { version= "^1.33.0", features = ["macros"] }

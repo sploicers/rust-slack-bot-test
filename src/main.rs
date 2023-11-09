@@ -7,7 +7,7 @@ mod util;
 #[tokio::main]
 async fn main() -> Result<()> {
 	let config = Arc::new(ApplicationConfig::new()?);
-	let robot = Robot::new()
+	let robot = Robot::new(config.clone())?
 		.with_message_listener(AlotListener::new())
 		.with_message_listener(RadListener::new())
 		.with_message_listener(NumberWanger::new())
