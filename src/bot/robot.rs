@@ -7,7 +7,7 @@ use std::sync::Arc;
 type RegisteredListeners<T> = Vec<Box<dyn Listener<T> + Send + Sync + 'static>>;
 
 pub struct Robot {
-	brain: Brain,
+	//brain: Brain,
 	message_listeners: RegisteredListeners<SlackMessageEvent>,
 	mention_listeners: RegisteredListeners<SlackAppMentionEvent>,
 }
@@ -15,7 +15,7 @@ pub struct Robot {
 impl Robot {
 	pub fn new(config: Arc<ApplicationConfig>) -> Result<Self> {
 		Ok(Self {
-			brain: Brain::new(config)?,
+			//brain: Brain::new(config)?,
 			message_listeners: vec![],
 			mention_listeners: vec![],
 		})

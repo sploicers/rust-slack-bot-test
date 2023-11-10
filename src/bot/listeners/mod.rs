@@ -1,10 +1,12 @@
 mod alot;
 mod listener;
 mod numberwanger;
+mod plusplus;
 mod rad;
 mod who;
 pub use alot::AlotListener;
 pub use listener::{Listener, SlackEvent};
 pub use numberwanger::NumberWanger;
+pub use plusplus::PlusPlusListener;
 pub use rad::RadListener;
 pub use who::WhoListener;

@@ -1,11 +1,10 @@
-use std::sync::Arc;
-
 use super::Listener;
 use crate::util::{react_to_message, ApplicationConfig, SlackContext};
 use async_trait::async_trait;
 use rand::{rngs::ThreadRng, Rng};
 use regex::Regex;
 use slack_morphism::{prelude::SlackMessageEvent, SlackReactionName};
+use std::sync::Arc;
 
 pub struct NumberWanger {
 	matcher: Regex,
